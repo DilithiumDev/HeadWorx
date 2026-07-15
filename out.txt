@@ -1,0 +1,14 @@
+Initializing calculation
+Initializing calculation
+Initializing calculation
+Initializing calculation
+Initializing calculation
+Result: { from: result }
+Initializing calculation
+Result: 30
+Initializing calculation
+Result: {from: var_a} + {from: var_b} = 30
+Initializing calculation
+Result: {from: var_a} + {from: var_b} = 30
+Initializing calculation
+Result: 10 + 20 = 30
