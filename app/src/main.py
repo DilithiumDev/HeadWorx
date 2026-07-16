@@ -1,54 +1,44 @@
-from app.src.core.config.config import load_config
-from app.src.core.config.schemas import ConfigurationSchema
-# from src.core.builder import BuildAppContext
-from os import getenv
-from dotenv import load_dotenv
-from prefect import flow, task
+from app.src.cli.parser import get_args
+from app.src.core.context import ContextBuilder
+from app.src.utils.logger import init_logger
+from pathlib import Path
+from yaml import safe_load
 
-value_registry = {}
-task_registry = {
-    "say": say,
-    "setvar": setvar,
-    "getvar": getvar,
-}
+def resolve_existing_file(path: str | Path) -> Path:
+    config_path = Path(path)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Configuration file at {config_path} was not found")
+    if config_path.is_dir():
+        raise IsADirectoryError(f"Configuration file at path {config_path} is a directory")
+    return config_path
 
-def main(config_path: str):
-    config: ConfigurationSchema = load_config(config_path)
-
-    print(f"Configuration: {config.project}")
-
-    # TODO: Load services and dependencies.
+def main(args) -> None:
+     
+    if args.config:
+        config_path = resolve_existing_file(args.config)
+    else:
+        path = f"conf/{args.env}/config.yaml"
+        config_path = resolve_existing_file(path)
     
-    # ctx = BuildAppContext(config)
+    logger = init_logger(
+        __name__,
+        dir=args.logdir,
+    )
 
-    # print(f"Context: {ctx}")
-    mainflow()
+    logger.info(f"Using configuration at path {config_path}")
 
-@task
-def say(msg: str) -> None:
-    with open("out.txt", "a") as f:
-        f.write(msg + "\n")
+    logger.info("Loading configuration file.")
+    with open(config_path, "r") as f:
+        config = safe_load(f)
+    logger.info("Configuration file loaded successfully.")
 
-@task
-def setvar(varname: str, value: any) -> None:
-    global value_registry
-    value_registry[varname] = value
+    logger.info(f"Building application context...")
+    ctx = ContextBuilder.build(config)
+    logger.info("Built the application context successfully.")
 
-@task
-def getvar(varname: str) -> any:
-    global value_registry
-    return value_registry.get(varname)
+    logger.info(f"Context: {ctx}")
 
-@flow
-def mainflow():
-    say("Setting var1 to \"foo\".")
-    setvar("var1", "foo")
-    var1_value = getvar("var1")
-    say(f"var1 = {var1_value}")
 
 if __name__ == "__main__":
-    load_dotenv()
-    environment = getenv("ENVIRONMENT", "dev")
-    config_path = f"conf/{environment}/config.yaml"
-
-    main(config_path)
+    args = get_args()
+    main(args)
