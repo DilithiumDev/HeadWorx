@@ -1,0 +1,30 @@
+# workflow.yaml
+steps:
+  - id: step1
+    task: say
+    params:
+      msg: "Initializing calculation"
+  - id: var_a
+    task: set_val
+    param_types:
+      value: int
+    params:
+      value: 10
+  - id: var_b
+    task: set_val
+    param_types:
+      value: int
+    params:
+      value: 20
+  - id: result
+    task: add
+    param_types:
+      a: int
+      b: int
+    params:
+      a: { from: var_a }
+      b: { from: var_b }
+  - id: print-result
+    task: say
+    params:
+      msg: "Result: { from: var_a } + { from: var_b } = { from: result }"
